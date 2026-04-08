@@ -1,0 +1,27 @@
+name: sql_repair_env
+version: "0.1.0"
+description: >
+  A real-world RL environment where an agent must repair broken SQL queries.
+  Given a SQLite schema and a broken/incorrect SQL query, the agent must
+  produce a corrected query that returns the expected result set.
+  Tasks range from simple syntax fixes to complex multi-table rewrites.
+author: akshat94rawat
+tags:
+  - openenv
+  - sql
+  - code-repair
+  - real-world
+  - data-engineering
+tasks:
+  - name: syntax_fix
+    description: Fix a SQL query with syntax errors (missing comma, wrong keyword, unclosed paren)
+    difficulty: easy
+  - name: logic_fix
+    description: Fix a SQL query that runs but returns wrong results (wrong JOIN, incorrect WHERE clause)
+    difficulty: medium
+  - name: schema_rewrite
+    description: Given a natural language spec and messy schema, write a correct multi-table query from scratch
+    difficulty: hard
+server:
+  port: 7860
+  framework: fastapi
