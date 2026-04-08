@@ -16,6 +16,9 @@ from tasks import TASKS, _run_sql
 
 
 MAX_ATTEMPTS = 5
+MIN_REWARD = 0.01
+MAX_REWARD = 0.99
+SOLVED_THRESHOLD = 0.99
 
 
 class SQLRepairEnvironment:
@@ -86,8 +89,8 @@ class SQLRepairEnvironment:
         scored observation.
 
         Reward design:
-          - Correct answer on first attempt: 1.0
-          - Correct answer on later attempts: 1.0 - 0.1*(attempt-1)  (max 0.6)
+          - Correct answer on first attempt: 0.99
+          - Correct answer on later attempts: 0.99 - 0.1*(attempt-1)  (min 0.6)
           - Partial progress: Jaccard similarity score (0.0–0.99)
           - Penalty per attempt: -0.05 (encourages efficiency)
           - Episode ends when: solved OR attempts exhausted
@@ -119,12 +122,12 @@ class SQLRepairEnvironment:
 
         # Reward shaping
         attempt_penalty = 0.05 * (self._attempt - 1)
-        if raw_score >= 1.0:
-            reward = max(1.0 - 0.1 * (self._attempt - 1), 0.6)
+        if raw_score >= SOLVED_THRESHOLD:
+            reward = max(MAX_REWARD - 0.1 * (self._attempt - 1), 0.6)
             self._solved = True
             self._done = True
         else:
-            reward = max(raw_score - attempt_penalty, 0.0)
+            reward = max(raw_score - attempt_penalty, MIN_REWARD)
             if self._attempt >= MAX_ATTEMPTS:
                 self._done = True
 
@@ -146,7 +149,7 @@ class SQLRepairEnvironment:
             attempt_number=self._attempt,
             max_attempts=MAX_ATTEMPTS,
             done=self._done,
-            reward=round(reward, 4),
+            reward=round(min(max(reward, MIN_REWARD), MAX_REWARD), 4),
         )
 
     @property

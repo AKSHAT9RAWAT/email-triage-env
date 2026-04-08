@@ -14,6 +14,9 @@ import sqlite3
 import json
 from typing import Callable, Optional
 
+MIN_SCORE = 0.01
+MAX_SCORE = 0.99
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
@@ -33,6 +36,11 @@ def _run_sql(conn: sqlite3.Connection, sql: str):
         return None, str(e)
 
 
+def _strict_score(value: float) -> float:
+    """Clamp any score into the required open interval (0, 1)."""
+    return round(min(max(value, MIN_SCORE), MAX_SCORE), 4)
+
+
 def _score_result(agent_rows, expected_rows) -> float:
     """
     Compare agent output to expected output.
@@ -40,20 +48,20 @@ def _score_result(agent_rows, expected_rows) -> float:
     0.0 if the query errored.
     """
     if agent_rows is None:
-        return 0.0
+        return MIN_SCORE
     agent_set = _rows_to_set(agent_rows)
     expected_set = _rows_to_set(expected_rows)
     if agent_set == expected_set:
-        return 1.0
+        return MAX_SCORE
     if len(expected_set) == 0:
-        return 1.0 if len(agent_set) == 0 else 0.1
+        return MAX_SCORE if len(agent_set) == 0 else _strict_score(0.1)
     # Partial credit: Jaccard similarity
     intersection = len(agent_set & expected_set)
     union = len(agent_set | expected_set)
     jaccard = intersection / union if union > 0 else 0.0
     # Penalise if totally wrong row count
     count_ratio = min(len(agent_set), len(expected_set)) / max(len(agent_set), len(expected_set)) if max(len(agent_set), len(expected_set)) > 0 else 1.0
-    return round((jaccard * 0.7 + count_ratio * 0.3), 4)
+    return _strict_score(jaccard * 0.7 + count_ratio * 0.3)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
