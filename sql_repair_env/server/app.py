@@ -12,10 +12,10 @@ Endpoints:
 import sys
 import os
 
-# Allow imports from parent directory (models.py, tasks.py live there)
+# Allow imports from parent directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -36,7 +36,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Single shared environment instance (stateful per-session)
 env = SQLRepairEnvironment()
 
 
@@ -61,7 +60,7 @@ def list_tasks():
             {
                 "name": "logic_fix",
                 "difficulty": "medium",
-                "description": "Fix a query that runs but returns wrong results (wrong JOIN, bad WHERE)",
+                "description": "Fix a query that runs but returns wrong results",
             },
             {
                 "name": "schema_rewrite",
@@ -90,6 +89,10 @@ def state():
     return env.state
 
 
-if __name__ == "__main__":
+def main():
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=7860)
+
+
+if __name__ == "__main__":
+    main()
